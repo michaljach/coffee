@@ -16,6 +16,7 @@
   <a href="https://github.com/michaljach/coffee/releases/latest"><img src="https://img.shields.io/github/v/release/michaljach/coffee?label=release" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/macOS-12%2B-black?logo=apple" alt="macOS 12+">
   <img src="https://img.shields.io/badge/Apple%20Silicon%20%2B%20Intel-universal-black" alt="Universal binary">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-black" alt="MIT license"></a>
 </p>
 
 ---
@@ -85,3 +86,7 @@ Requires the Xcode Command Line Tools. The whole app is a single file, [`main.sw
 ./install-sudoers.sh      # optional: passwordless toggling without Homebrew
 ./build.sh release        # zip for a GitHub release
 ```
+
+## License
+
+[MIT](LICENSE) © Michal Jach
