@@ -8,6 +8,7 @@ A tiny macOS menu bar app that keeps your Mac awake — even with the lid closed
 ## Install
 
 ```sh
+brew trust --cask michaljach/tap/coffee   # Homebrew 7+ requires trusting third-party casks
 brew install --cask michaljach/tap/coffee
 ```
 
