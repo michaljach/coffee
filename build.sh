@@ -4,7 +4,7 @@
 #        ./build.sh release    build and zip to Coffee-<version>.zip (for the Homebrew cask)
 set -e
 cd "$(dirname "$0")"
-VERSION=1.0.0
+VERSION=1.1.0
 APP=Coffee.app
 TMP=$(mktemp -d)
 trap 'rm -rf $TMP' EXIT

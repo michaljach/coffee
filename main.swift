@@ -1,23 +1,43 @@
 import AppKit
+import IOKit.ps
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-    private var enabled = false
+    private let defaults = UserDefaults.standard
+    /// What the user asked for (the cup is filled).
+    private var wanted = false { didSet { defaults.set(wanted, forKey: "wanted") } }
+    /// Whether sleep is actually disabled right now (`pmset` SleepDisabled).
+    private var applied = false
+    /// Setting: only keep awake while on the power adapter.
+    private var onlyOnAC: Bool {
+        get { defaults.bool(forKey: "onlyOnAC") }
+        set { defaults.set(newValue, forKey: "onlyOnAC") }
+    }
+    private var onAC = true
+    private var powerSource: CFRunLoopSource?
 
     func applicationDidFinishLaunching(_ note: Notification) {
-        enabled = Self.readState()
+        onAC = Self.isOnAC()
+        applied = Self.readState()
+        // Restore a "wanted but paused on battery" state across relaunches.
+        wanted = applied || (defaults.bool(forKey: "wanted") && onlyOnAC && !onAC)
         if let button = item.button {
             button.target = self
             button.action = #selector(clicked)
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
-        refresh()
+        watchPowerSource()
+        apply()
     }
 
     @objc private func clicked() {
         if NSApp.currentEvent?.type == .rightMouseUp || NSApp.currentEvent?.modifierFlags.contains(.control) == true {
             let menu = NSMenu()
-            menu.addItem(withTitle: enabled ? "Sleep disabled" : "Sleep allowed", action: nil, keyEquivalent: "")
+            menu.addItem(withTitle: statusText, action: nil, keyEquivalent: "")
+            menu.addItem(.separator())
+            let ac = menu.addItem(withTitle: "Only on Power Adapter", action: #selector(toggleOnlyOnAC), keyEquivalent: "")
+            ac.target = self
+            ac.state = onlyOnAC ? .on : .off
             menu.addItem(.separator())
             menu.addItem(withTitle: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
             item.menu = menu
@@ -25,13 +45,59 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             item.menu = nil
             return
         }
-        if Self.setState(!enabled) { enabled = Self.readState() }
+        wanted.toggle()
+        apply()
+    }
+
+    @objc private func toggleOnlyOnAC() {
+        onlyOnAC.toggle()
+        apply()
+    }
+
+    /// Bring `pmset` in line with what the user wants, given the power source and setting.
+    private func apply() {
+        let target = wanted && (!onlyOnAC || onAC)
+        if target != applied {
+            _ = Self.setState(target)
+            applied = Self.readState()
+            // Password prompt cancelled or failed: reflect reality instead of the request.
+            if applied != target { wanted = applied }
+        }
         refresh()
     }
 
+    private var paused: Bool { wanted && !applied }
+
+    private var statusText: String {
+        if paused { return "Paused — on battery" }
+        return applied ? "Sleep disabled" : "Sleep allowed"
+    }
+
     private func refresh() {
-        item.button?.image = Self.cupImage(filled: enabled)
-        item.button?.toolTip = enabled ? "Awake (lid-close sleep disabled)" : "Normal sleep"
+        item.button?.image = Self.cupImage(filled: wanted)
+        item.button?.appearsDisabled = paused
+        item.button?.toolTip = paused ? "Paused on battery (resumes on power adapter)"
+            : applied ? "Awake (lid-close sleep disabled)" : "Normal sleep"
+    }
+
+    private func watchPowerSource() {
+        let ctx = Unmanaged.passUnretained(self).toOpaque()
+        guard let src = IOPSNotificationCreateRunLoopSource({ ctx in
+            guard let ctx else { return }
+            let me = Unmanaged<AppDelegate>.fromOpaque(ctx).takeUnretainedValue()
+            let ac = AppDelegate.isOnAC()
+            guard ac != me.onAC else { return }  // ignore battery % updates
+            me.onAC = ac
+            me.apply()
+        }, ctx)?.takeRetainedValue() else { return }
+        powerSource = src
+        CFRunLoopAddSource(CFRunLoopGetMain(), src, .defaultMode)
+    }
+
+    static func isOnAC() -> Bool {
+        guard let info = IOPSCopyPowerSourcesInfo()?.takeRetainedValue(),
+              let type = IOPSGetProvidingPowerSourceType(info)?.takeUnretainedValue() else { return true }
+        return (type as String) == kIOPMACPowerKey
     }
 
     /// Plain coffee cup (no saucer, no steam), drawn as a menu bar template image.

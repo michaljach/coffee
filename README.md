@@ -38,7 +38,13 @@ Homebrew asks for your password **once**, during install. After that, toggling n
 | <picture><source media="(prefers-color-scheme: dark)" srcset="assets/cup-on-dark.png"><img src="assets/cup-on-light.png" width="24" alt="Full cup"></picture> | **On** — sleep is disabled, including when you close the lid |
 
 - **Click** the cup to toggle.
-- **Right-click** (or ⌃-click) for the current state and **Quit**.
+- **Right-click** (or ⌃-click) for the current state, settings, and **Quit**.
+
+### Only on Power Adapter
+
+Enable **Only on Power Adapter** in the right-click menu to keep your Mac awake only while it's
+plugged in. On battery, Coffee pauses (the cup dims) and your Mac sleeps normally — so a closed
+MacBook won't drain in your bag. Plug back in and it resumes automatically.
 
 To start Coffee automatically, add it in **System Settings → General → Login Items**.
 
