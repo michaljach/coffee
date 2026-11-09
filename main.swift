@@ -8,7 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var wanted = false { didSet { defaults.set(wanted, forKey: "wanted") } }
     /// Whether sleep is actually disabled right now (`pmset` SleepDisabled).
     private var applied = false
-    /// Setting: only keep awake while on the power adapter.
+    /// Setting: pause (allow sleep) while on battery, resume on the power adapter.
     private var onlyOnAC: Bool {
         get { defaults.bool(forKey: "onlyOnAC") }
         set { defaults.set(newValue, forKey: "onlyOnAC") }
@@ -35,7 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let menu = NSMenu()
             menu.addItem(withTitle: statusText, action: nil, keyEquivalent: "")
             menu.addItem(.separator())
-            let ac = menu.addItem(withTitle: "Only on Power Adapter", action: #selector(toggleOnlyOnAC), keyEquivalent: "")
+            let ac = menu.addItem(withTitle: "Pause on Battery", action: #selector(toggleOnlyOnAC), keyEquivalent: "")
             ac.target = self
             ac.state = onlyOnAC ? .on : .off
             menu.addItem(.separator())

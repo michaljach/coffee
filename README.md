@@ -40,9 +40,9 @@ Homebrew asks for your password **once**, during install. After that, toggling n
 - **Click** the cup to toggle.
 - **Right-click** (or ⌃-click) for the current state, settings, and **Quit**.
 
-### Only on Power Adapter
+### Pause on Battery
 
-Enable **Only on Power Adapter** in the right-click menu to keep your Mac awake only while it's
+Enable **Pause on Battery** in the right-click menu to keep your Mac awake only while it's
 plugged in. On battery, Coffee pauses (the cup dims) and your Mac sleeps normally — so a closed
 MacBook won't drain in your bag. Plug back in and it resumes automatically.
 
