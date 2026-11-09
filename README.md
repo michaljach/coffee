@@ -43,7 +43,7 @@ To start Coffee automatically, add it in **System Settings → General → Login
 
 ## How it works
 
-Apps like Amphetamine or `caffeinate` hold a power assertion, which macOS ignores when you
+Most keep-awake tools (including `caffeinate`) hold a power assertion, which macOS ignores when you
 close the lid (unless an external display is connected). Coffee instead flips the system-wide
 setting directly:
 
