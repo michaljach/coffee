@@ -100,26 +100,70 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return (type as String) == kIOPMACPowerKey
     }
 
-    /// Plain coffee cup (no saucer, no steam), drawn as a menu bar template image.
+    /// Coffee cup in a slight three-quarter view (no steam), drawn as a menu
+    /// bar template image. Mirrors the project's 18×18 SVG, flipped vertically
+    /// for AppKit's bottom-left origin.
     static func cupImage(filled: Bool) -> NSImage {
         let img = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { _ in
             NSColor.black.set()
-            let body = NSBezierPath()
-            body.move(to: NSPoint(x: 1.75, y: 13.5))
-            body.line(to: NSPoint(x: 13.25, y: 13.5))
-            body.curve(to: NSPoint(x: 9.5, y: 3.25), controlPoint1: NSPoint(x: 13.25, y: 7.5), controlPoint2: NSPoint(x: 12.0, y: 3.25))
-            body.line(to: NSPoint(x: 5.5, y: 3.25))
-            body.curve(to: NSPoint(x: 1.75, y: 13.5), controlPoint1: NSPoint(x: 3.0, y: 3.25), controlPoint2: NSPoint(x: 1.75, y: 7.5))
-            body.close()
-            body.lineWidth = 1.5
-            body.lineJoinStyle = .round
-            if filled { body.fill() }
-            body.stroke()
-            let handle = NSBezierPath()
-            handle.appendArc(withCenter: NSPoint(x: 13.4, y: 10.0), radius: 2.6, startAngle: 90, endAngle: -75, clockwise: true)
-            handle.lineWidth = 1.5
-            handle.lineCapStyle = .round
+            let ctx = NSGraphicsContext.current!.cgContext
+            // Match the visual weight of the other menu bar icons.
+            ctx.translateBy(x: 9, y: 9)
+            ctx.scaleBy(x: 1.15, y: 1.15)
+            ctx.translateBy(x: -8.8, y: -8.65)
+
+            // Handle first: the cup wall then covers the inner part of its stroke.
+            let handle = NSBezierPath(ovalIn: NSRect(x: 11.4, y: 7.0, width: 4.0, height: 4.0))
+            handle.lineWidth = 1.3
             handle.stroke()
+
+            // Tapered cup body.
+            let body = NSBezierPath()
+            body.move(to: NSPoint(x: 2.2, y: 12.4))
+            body.line(to: NSPoint(x: 12.8, y: 12.4))
+            body.line(to: NSPoint(x: 11.7, y: 5.4))
+            body.curve(to: NSPoint(x: 9.3, y: 3.3),
+                       controlPoint1: NSPoint(x: 11.5, y: 4.1),
+                       controlPoint2: NSPoint(x: 10.55, y: 3.3))
+            body.line(to: NSPoint(x: 5.7, y: 3.3))
+            body.curve(to: NSPoint(x: 3.3, y: 5.4),
+                       controlPoint1: NSPoint(x: 4.45, y: 3.3),
+                       controlPoint2: NSPoint(x: 3.5, y: 4.1))
+            body.close()
+            body.fill()
+
+            // Outer rim.
+            NSBezierPath(ovalIn: NSRect(x: 2.2, y: 10.8, width: 10.6, height: 3.2)).fill()
+
+            // Cut out the opening; the empty cup also loses its interior.
+            ctx.saveGState()
+            ctx.setBlendMode(.destinationOut)
+            NSColor.black.set()
+            NSBezierPath(ovalIn: NSRect(x: 3.4, y: 11.5, width: 8.2, height: 1.8)).fill()
+            if !filled {
+                let interior = NSBezierPath()
+                // SVG's quadratic curve, expressed as an equivalent cubic.
+                let start = NSPoint(x: 3.5, y: 11.4)
+                let control = NSPoint(x: 7.5, y: 9.1)
+                let end = NSPoint(x: 11.5, y: 11.4)
+                interior.move(to: start)
+                interior.curve(to: end,
+                               controlPoint1: NSPoint(x: start.x + (control.x - start.x) * 2 / 3,
+                                                      y: start.y + (control.y - start.y) * 2 / 3),
+                               controlPoint2: NSPoint(x: end.x + (control.x - end.x) * 2 / 3,
+                                                      y: end.y + (control.y - end.y) * 2 / 3))
+                interior.line(to: NSPoint(x: 10.55, y: 5.5))
+                interior.curve(to: NSPoint(x: 9.4, y: 4.5),
+                               controlPoint1: NSPoint(x: 10.4, y: 4.85),
+                               controlPoint2: NSPoint(x: 10.0, y: 4.5))
+                interior.line(to: NSPoint(x: 5.6, y: 4.5))
+                interior.curve(to: NSPoint(x: 4.45, y: 5.5),
+                               controlPoint1: NSPoint(x: 5.0, y: 4.5),
+                               controlPoint2: NSPoint(x: 4.6, y: 4.85))
+                interior.close()
+                interior.fill()
+            }
+            ctx.restoreGState()
             return true
         }
         img.isTemplate = true
